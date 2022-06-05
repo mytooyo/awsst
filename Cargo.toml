@@ -1,0 +1,33 @@
+[package]
+authors = ["mytooyo"]
+edition = "2021"
+name = "awsst"
+version = "0.0.1"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+# CLIツール
+clap = {version = "3.1.18", features = ["derive"]}
+# Date and time library
+chrono = "0.4.19"
+# 表示をTable型式にするため
+prettytable-rs = "0.8.0"
+# コンソール上で入力や選択するため
+dialoguer = "0.10.1"
+# AWS_PROFILEを環境変数に設定するため
+setenv = "0.1.2"
+
+# ディレクトリ関連の処理を行うため
+dirs = "4.0.0"
+
+# AWS関連のSDK
+aws-config = "0.12.0"
+aws-sdk-sts = "0.12.0"
+tokio = {version = "1", features = ["full"]}
+
+# Ctrl+Cを検知するため
+ctrlc = "3.2.2"
+
+# AWSのConfig系のファイルをTOML形式で読み込むため
+regex = "1.5.6"

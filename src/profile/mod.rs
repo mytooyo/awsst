@@ -1,5 +1,8 @@
 use self::configs::{AWSConfigs, Config};
 use self::credentials::{AWSCredentials, Credential};
+use self::select::Selected;
+use crate::profile::select::new_selected;
+use crate::profile::select::AWSSelecteds;
 use crate::utils;
 use crate::utils::AWSFileManager;
 use prettytable::{cell, format, row, Table};
@@ -8,9 +11,28 @@ use std::process::exit;
 pub mod configs;
 pub mod configure;
 pub mod credentials;
+pub mod select;
 
 pub const CONFIG_FILE_NAME: &str = "config";
 pub const CREDENTIAL_FILE_NAME: &str = "credentials";
+pub const TOOL_FILE_NAME: &str = "awsst";
+
+/// 初期処理
+///
+pub fn initialize() -> Result<(), Box<dyn std::error::Error>> {
+    let mut prompter = utils::prompt::Prompter::new();
+    // 現在のプロファイルを取得
+    let selected = read_tool(&mut prompter);
+    let profile = selected.items.get("selected");
+
+    if let Some(p) = profile {
+        let shell = get_shell();
+        // `export`を行う
+        shell.setenv("AWS_PROFILE", p.name.clone());
+    }
+
+    Ok(())
+}
 
 /// セッショントークンを取得する
 ///
@@ -189,7 +211,7 @@ pub async fn remove(profile: Option<String>) -> Result<(), Box<dyn std::error::E
 
     // ConfigとCredentialを削除
     configs.remove(name.clone());
-    credentials.remove(name.clone());
+    credentials.remove(name);
 
     // ファイル書き込みを行う
     configs.write()?;
@@ -216,9 +238,14 @@ pub fn use_profile(profile: Option<String>) -> Result<(), Box<dyn std::error::Er
     }
     let name = selection.unwrap();
 
+    // プロファイル情報を設定
+    let config = configs.items.get(&name).unwrap();
+    _set_tool_file(config)?;
+
     // Set the information of the selected profile
     // in the environment variable at the end of execution
     let shell = get_shell();
+    // `export`を行う
     shell.setenv("AWS_PROFILE", name);
 
     Ok(())
@@ -236,9 +263,14 @@ pub fn list() -> Result<(), Box<dyn std::error::Error>> {
     // ベースとなるcredentialのみ取得
     let bases = credentials.bases;
 
+    // 現在のプロファイルを取得
+    let selected = read_tool(&mut prompter);
+    let profile = selected.items.get("selected");
+
     // 表示するためのテーブル
     let mut table = Table::new();
     table.set_titles(row![
+        cell!(""),
         cell!("NAME"),
         cell!("ACCOUNT"),
         cell!("MFA"),
@@ -249,17 +281,24 @@ pub fn list() -> Result<(), Box<dyn std::error::Error>> {
 
     // データを追加
     for cred in bases {
+        let _profile = profile;
+        let used = if _profile.is_some() && _profile.unwrap().name == cred.name {
+            "*".to_string()
+        } else {
+            "".to_string()
+        };
         // アカウント情報
-        let account = cred.account.unwrap_or("".to_string());
+        let account = cred.account.unwrap_or_else(|| "".to_string());
         // MFA
-        let mfa = cred.mfa_serial.unwrap_or("".to_string());
+        let mfa = cred.mfa_serial.unwrap_or_else(|| "".to_string());
         // Role arn
-        let role = cred.role_arn.unwrap_or("".to_string());
+        let role = cred.role_arn.unwrap_or_else(|| "".to_string());
         // 期限
-        let expiration = cred.expiration.unwrap_or("".to_string());
+        let expiration = cred.expiration.unwrap_or_else(|| "".to_string());
 
         // テーブルに追加
         table.add_row(row![
+            cell!(used),
             cell!(cred.name),
             cell!(account),
             cell!(mfa),
@@ -308,4 +347,25 @@ pub fn read_credential(prompter: &mut utils::prompt::Prompter) -> AWSCredentials
 
     // AWSCredentials返却
     result.unwrap()
+}
+
+/// ツール用のファイル読み込み
+pub fn read_tool(prompter: &mut utils::prompt::Prompter) -> AWSSelecteds {
+    // ファイル読み込み
+    let result = utils::file::read::<AWSSelecteds, Selected>(TOOL_FILE_NAME);
+    // 読み込みに失敗した場合は`aws configure`を行うかどうかを確認
+    if result.is_err() {
+        prompter.error(format!("{}", result.err().unwrap()).as_str());
+        exit(1);
+    }
+
+    // AWSCredentials返却
+    result.unwrap()
+}
+
+/// ツール用のファイルを設定
+fn _set_tool_file(config: &Config) -> Result<(), Box<dyn std::error::Error>> {
+    let selecteds = new_selected(config.name.clone(), config.region.clone());
+    // ファイル書き込みを行う
+    selecteds.write()
 }

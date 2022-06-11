@@ -32,11 +32,11 @@ impl Prompter {
     }
 
     /// 選択用のプロンプトを設定
-    pub fn select_prompt(&self, selections: &Vec<String>, msg: &str) -> Option<usize> {
+    pub fn select_prompt(&self, selections: &[String], msg: &str) -> Option<usize> {
         let result = Select::with_theme(&ColorfulTheme::default())
             .with_prompt(msg)
             .default(0)
-            .items(&selections)
+            .items(selections)
             .interact_on_opt(&self.term);
         if result.is_err() {
             return None;
@@ -136,7 +136,8 @@ impl StringWriter {
 
     /// 行データをリスト形式に
     pub fn as_vec(&self) -> Vec<&str> {
-        self.as_string().split("\n").collect::<Vec<&str>>()
+        let c: char = '\n';
+        self.as_string().split(c).collect::<Vec<&str>>()
     }
 }
 

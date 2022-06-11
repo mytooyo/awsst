@@ -25,6 +25,8 @@ struct Cli {
 // サブコマンドに対する処理
 #[derive(Subcommand, Debug)]
 enum CliSubCommand {
+    /// Tool initialize
+    Init {},
     /// Get session token
     Session {
         /// Profile to be used
@@ -67,6 +69,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // サブコマンドが指定されている場合
     if let Some(sub) = args.sub {
         match sub {
+            CliSubCommand::Init {} => {
+                // 初期処理
+                profile::initialize()?;
+            }
             CliSubCommand::Session { profile, force } => {
                 // セッショントークン取得
                 profile::session_token(profile, force).await?;
@@ -88,7 +94,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 profile::use_profile(profile)?;
             }
             CliSubCommand::Ls {} => {
-                // プロファイルを選択
+                // プロファイル一覧表示
                 profile::list()?;
             }
         }

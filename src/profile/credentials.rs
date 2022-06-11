@@ -17,7 +17,7 @@ pub struct AWSCredentials {
 
 impl AWSCredentials {
     // キーとする名称からCredential情報を取得
-    fn __credential_by_key(&self, vec: &Vec<Credential>, key: &String) -> Option<Credential> {
+    fn __credential_by_key(&self, vec: &[Credential], key: &str) -> Option<Credential> {
         // filter等を利用するとライフタイム的に問題があるため、
         // forで探索を行う
         for ele in vec {
@@ -60,7 +60,7 @@ impl AWSCredentials {
             return Some(_origin);
         }
         // // 存在しない場合は新たに生成してMapに追加しておく
-        let mut new_cred = cred.clone();
+        let mut new_cred = cred;
         new_cred.name = format!("{}-{}", key, KEY_SUFFIX);
         self.originals.push(new_cred);
 
@@ -131,34 +131,26 @@ impl AWSCredentials {
 
     /// HashMapから設定
     fn set_from_map(key: String, ele: &HashMap<String, String>) -> Credential {
-        let mut role = false;
-        if ele.contains_key("assumed_role") {
-            if ele.get("assumed_role").unwrap() == "true" {
-                role = true;
-            }
-        }
+        let role = ele.contains_key("assumed_role") && ele.get("assumed_role").unwrap() == "true";
 
         Credential {
             name: key,
-            access_key_id: Self::get_value_from_map(&ele, "aws_access_key_id"),
-            secret_access_key: Self::get_value_from_map(&ele, "aws_secret_access_key"),
-            session_token: Self::get_value_from_map(&ele, "aws_session_token"),
-            security_token: Self::get_value_from_map(&ele, "aws_security_token"),
-            expiration: Self::get_value_from_map(&ele, "expiration"),
-            mfa_serial: Self::get_value_from_map(&ele, "mfa_serial"),
-            role_arn: Self::get_value_from_map(&ele, "role_arn"),
-            account: Self::get_value_from_map(&ele, "account"),
-            source_profile: Self::get_value_from_map(&ele, "source_profile"),
+            access_key_id: Self::get_value_from_map(ele, "aws_access_key_id"),
+            secret_access_key: Self::get_value_from_map(ele, "aws_secret_access_key"),
+            session_token: Self::get_value_from_map(ele, "aws_session_token"),
+            security_token: Self::get_value_from_map(ele, "aws_security_token"),
+            expiration: Self::get_value_from_map(ele, "expiration"),
+            mfa_serial: Self::get_value_from_map(ele, "mfa_serial"),
+            role_arn: Self::get_value_from_map(ele, "role_arn"),
+            account: Self::get_value_from_map(ele, "account"),
+            source_profile: Self::get_value_from_map(ele, "source_profile"),
             assumed_role: role,
         }
     }
 
     /// HashMapからOption型で取り出す
     fn get_value_from_map(map: &HashMap<String, String>, key: &str) -> Option<String> {
-        match map.get(key) {
-            Some(data) => Some(data.clone()),
-            None => None,
-        }
+        map.get(key).cloned()
     }
 }
 
@@ -295,7 +287,7 @@ impl Credential {
             let duration = date - now;
             return duration.num_hours() < 3;
         }
-        return true;
+        true
     }
 
     /// 環境変数に利用するAWSプロファイル情報を設定する
@@ -319,10 +311,10 @@ impl Credential {
         config: &super::configs::Config,
     ) -> Result<aws_sdk_sts::model::Credentials, aws_sdk_sts::Error> {
         // 環境情報を設定
-        self.set_environment(&config);
+        self.set_environment(config);
 
         // 認証情報取得リクエスト
-        aws_sts_request(&config, self.clone()).await
+        aws_sts_request(config, self.clone()).await
     }
 
     /// クレデンシャル情報更新
@@ -348,7 +340,7 @@ impl Credential {
         }
 
         // アカウント情報を取得して設定しておく
-        let result = caller_identity(&config).await;
+        let result = caller_identity(config).await;
         if let Ok(account) = result {
             self.account = Some(account);
         }

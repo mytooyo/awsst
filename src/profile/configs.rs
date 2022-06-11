@@ -43,30 +43,25 @@ impl AWSConfigs {
             return Some(selections[0].clone());
         }
 
-        let name: String;
         // プロファイルが指定されている場合
-        if let Some(_profile) = profile {
+        let name: String = if let Some(_profile) = profile {
             // 指定のプロファイルが存在するか確認
             if !self.exists_config(_profile.clone()) {
                 // 存在しない場合はエラー
                 prompter.error("Oops.. profile does not exists profile...");
                 return None;
             }
-            name = _profile;
+            _profile
         }
         // 対象が指定されていない場合は選択プロンプトを表示して対象を選択してもらう
         else {
             // コンソールに選択プロンプトを表示
             let opt_selection =
-                prompter.select_prompt(selections, "Please select the profile you want to use");
-            // 選択されていない場合は終了
-            if opt_selection.is_none() {
-                return None;
-            }
+                prompter.select_prompt(selections, "Please select the profile you want to use")?;
 
             // 選択されたインデックスからConfigの名前を取得
-            name = selections[opt_selection.unwrap()].clone();
-        }
+            selections[opt_selection].clone()
+        };
         Some(name)
     }
 }

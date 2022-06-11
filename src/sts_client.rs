@@ -70,10 +70,10 @@ fn get_mfa_info(mfa_serial: Option<String>) -> MFAInfo {
         Err(_) => None,
     };
 
-    return MFAInfo {
-        arn: mfa_serial.clone(),
+    MFAInfo {
+        arn: mfa_serial,
         code: input,
-    };
+    }
 }
 
 /// STSクライアント生成

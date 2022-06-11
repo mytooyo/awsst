@@ -38,7 +38,7 @@ where
     // ファイルの存在確認し、存在しない場合は空で作成しておく
     if !config_path.exists() {
         let mut f = BufWriter::new(fs::File::create(config_path.clone())?);
-        f.write("".as_bytes())?;
+        f.write_all("".as_bytes())?;
     }
 
     // ファイルを読み込み
@@ -81,7 +81,8 @@ fn shape_aws_toml(
         }
 
         // `=`で分割する
-        let data = l.split("=").collect::<Vec<&str>>();
+        let c: char = '=';
+        let data = l.split(c).collect::<Vec<&str>>();
         // 分割できなかった場合は無視
         if data.len() < 2 {
             continue;
@@ -104,16 +105,18 @@ fn shape_aws_toml(
     for (key, val) in tomls.iter() {
         // キー内の要素を格納するMap
         let mut data_map = HashMap::new();
+        let c: char = '=';
+        let c2: char = ';';
         // セミコロンで分割することでキー要素内の個々のデータを取得する
-        val.split(";").for_each(|x| {
+        val.split(c2).for_each(|x| {
             // 個々のデータをKey, Value形式に変換してMapに追加
             let v = x
-                .split("=")
+                .split(c)
                 .map(|s| s.trim().to_string())
                 .collect::<Vec<String>>();
             // Base64変換された認証情報は値に`=`が含まれるため、すべてをjoinするようにする
             let s = v[1..(v.len())].to_vec().join("=");
-            data_map.insert(v[0].clone(), s.clone());
+            data_map.insert(v[0].clone(), s);
         });
         ret_map.insert(key.clone(), data_map);
     }
@@ -155,7 +158,7 @@ pub fn write(
     fullpath.push(file_name);
 
     let mut f = BufWriter::new(fs::File::create(fullpath)?);
-    f.write(bytes)?;
+    f.write_all(bytes)?;
 
     Ok(())
 }

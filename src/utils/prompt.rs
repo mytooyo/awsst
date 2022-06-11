@@ -25,11 +25,10 @@ impl Prompter {
     pub fn flush(&self) {
         let _term = self.term.clone();
         // Ctrl+Cを検知してターミナルのカーソルを戻す
-        ctrlc::set_handler(move || {
+        let _ = ctrlc::set_handler(move || {
             let _ = _term.show_cursor();
             let _ = _term.flush();
-        })
-        .expect("Error setting Ctrl-C handler");
+        });
     }
 
     /// 選択用のプロンプトを設定

@@ -191,6 +191,10 @@ pub async fn remove(profile: Option<String>) -> Result<(), Box<dyn std::error::E
     configs.remove(name.clone());
     credentials.remove(name.clone());
 
+    // ファイル書き込みを行う
+    configs.write()?;
+    credentials.write()?;
+
     prompter.standard("complete! deleted profile.");
 
     Ok(())

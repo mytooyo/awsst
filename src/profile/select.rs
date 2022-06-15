@@ -42,7 +42,7 @@ impl AWSFileManager<Selected> for AWSSelecteds {
         // 書き込み用に整形
         let data = self.to_file();
         // ファイル書き込み
-        super::utils::file::write(super::TOOL_FILE_NAME, data)
+        super::utils::file::write(super::TOOL_FILE_NAME, data, false)
     }
 
     fn add(&mut self, data: Selected) {

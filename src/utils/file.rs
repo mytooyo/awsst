@@ -128,12 +128,18 @@ fn shape_aws_toml(
 pub fn write(
     file_name: &str,
     data: HashMap<String, HashMap<String, String>>,
+    add_profile: bool,
 ) -> Result<(), Box<dyn std::error::Error>> {
     // 書き込み用のデータ
     let mut write_data = String::new();
     for (key, ele) in data {
         // キーを設定
-        write_data += format!("[{}]\n", key).as_str();
+        if add_profile && key != "default" {
+            write_data += format!("[profile {}]\n", key).as_str();
+        } else {
+            write_data += format!("[{}]\n", key).as_str();
+        }
+
         // 要素をそれぞれ追加していく
         for (ele_key, val) in ele {
             write_data += format!("{} = {}\n", ele_key, val).as_str();

@@ -191,7 +191,7 @@ impl AWSFileManager<Credential> for AWSCredentials {
         // 書き込み用に整形
         let data = self.to_file();
         // ファイル書き込み
-        super::utils::file::write(super::CREDENTIAL_FILE_NAME, data)
+        super::utils::file::write(super::CREDENTIAL_FILE_NAME, data, false)
     }
 
     fn add(&mut self, data: Credential) {

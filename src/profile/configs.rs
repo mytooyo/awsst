@@ -99,7 +99,7 @@ impl AWSFileManager<Config> for AWSConfigs {
         // 書き込み用に整形
         let data = self.to_file();
         // ファイル書き込み
-        super::utils::file::write(super::CONFIG_FILE_NAME, data)
+        super::utils::file::write(super::CONFIG_FILE_NAME, data, true)
     }
 
     fn add(&mut self, data: Config) {

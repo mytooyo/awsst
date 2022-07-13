@@ -75,7 +75,7 @@ impl AWSFileManager<Config> for AWSConfigs {
             items.insert(
                 key.clone().replace("profile ", ""),
                 Config {
-                    name: key,
+                    name: key.clone().replace("profile ", ""),
                     region: ele["region"].clone(),
                     output: ele["output"].clone(),
                 },

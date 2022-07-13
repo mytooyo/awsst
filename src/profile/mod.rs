@@ -27,8 +27,11 @@ pub fn initialize() -> Result<(), Box<dyn std::error::Error>> {
 
     if let Some(p) = profile {
         let shell = get_shell();
+        // `profile`がついている場合は除去
+        let n = p.name.replace("profile ", "");
+
         // `export`を行う
-        shell.setenv("AWS_PROFILE", p.name.clone());
+        shell.setenv("AWS_PROFILE", n.clone());
     }
 
     Ok(())

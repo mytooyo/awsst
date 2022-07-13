@@ -70,8 +70,12 @@ pub async fn session_token(
     let opt_cred = credentials.auth_credential(name.clone(), force);
     // Noneが返却された場合は期限内であるため、スキップ
     if opt_cred.is_none() {
-        prompter.error("The credential has more than 3 hours remaining to expire.");
-        prompter.error("For extensions, please force renewal with the [-f] option");
+        // 取得したセッショントークンのプロファイルを選択状態にする
+        use_profile(Some(name))?;
+
+        // メッセージを出力して終了
+        prompter.standard("The credential has more than 3 hours remaining to expire.");
+        prompter.standard("For extensions, please force renewal with the [-f] option");
         return Ok(());
     }
     let mut cred = opt_cred.unwrap();

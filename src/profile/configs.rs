@@ -30,7 +30,9 @@ impl AWSConfigs {
         profile: Option<String>,
         prompter: &mut utils::prompt::Prompter,
     ) -> Option<String> {
-        let selections = &self.shape_for_selectable();
+        let selections = &mut self.shape_for_selectable();
+        // 取得したConfigをソート
+        selections.sort();
 
         // 0件の場合はメッセージを表示して終了
         if selections.is_empty() {

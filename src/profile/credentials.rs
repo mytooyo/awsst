@@ -1,4 +1,4 @@
-use chrono::{DateTime, Local, TimeZone};
+use chrono::{DateTime, Local};
 use std::{collections::HashMap, env, fmt::Display, time::SystemTime};
 
 use super::utils::{AWSFile, AWSFileManager};
@@ -92,7 +92,7 @@ impl AWSCredentials {
         &mut self,
         config: &super::configs::Config,
         key: String,
-        cred: aws_sdk_sts::model::Credentials,
+        cred: aws_sdk_sts::types::Credentials,
     ) -> Option<Credential> {
         let no_suf_key = key.clone().replace(format!("-{}", KEY_SUFFIX).as_str(), "");
 
@@ -138,7 +138,6 @@ impl AWSCredentials {
             access_key_id: Self::get_value_from_map(ele, "aws_access_key_id"),
             secret_access_key: Self::get_value_from_map(ele, "aws_secret_access_key"),
             session_token: Self::get_value_from_map(ele, "aws_session_token"),
-            security_token: Self::get_value_from_map(ele, "aws_security_token"),
             expiration: Self::get_value_from_map(ele, "expiration"),
             mfa_serial: Self::get_value_from_map(ele, "mfa_serial"),
             role_arn: Self::get_value_from_map(ele, "role_arn"),
@@ -222,7 +221,6 @@ pub struct Credential {
     pub access_key_id: Option<String>,
     pub secret_access_key: Option<String>,
     pub session_token: Option<String>,
-    pub security_token: Option<String>,
     pub expiration: Option<String>,
     pub mfa_serial: Option<String>,
     pub role_arn: Option<String>,
@@ -238,7 +236,6 @@ impl Default for Credential {
             access_key_id: None,
             secret_access_key: None,
             session_token: None,
-            security_token: None,
             expiration: None,
             mfa_serial: None,
             role_arn: None,
@@ -261,7 +258,6 @@ impl Credential {
             access_key_id: Some(access_key_id),
             secret_access_key: Some(secret_access_key),
             session_token: None,
-            security_token: None,
             expiration: None,
             mfa_serial: mfa,
             role_arn: None,
@@ -276,9 +272,8 @@ impl Credential {
     pub fn is_expired(&self) -> bool {
         // 期限が設定されている場合
         if let Some(expiration) = &self.expiration {
-            let date = Local
-                .datetime_from_str(expiration.as_str(), "%Y-%m-%d %H:%M:%S")
-                .unwrap();
+            let date = DateTime::parse_from_str(&expiration, "%Y-%m-%d %H:%M:%S").unwrap();
+            let date = date.with_timezone(&Local);
             let now = Local::now();
             // 比較して、期限が切れていない場合は`false`
             // if date.cmp(&now) == Ordering::Greater {
@@ -309,7 +304,7 @@ impl Credential {
     pub async fn sts_credential(
         &mut self,
         config: &super::configs::Config,
-    ) -> Result<aws_sdk_sts::model::Credentials, aws_sdk_sts::Error> {
+    ) -> Result<aws_sdk_sts::types::Credentials, aws_sdk_sts::Error> {
         // 環境情報を設定
         self.set_environment(config);
 
@@ -321,22 +316,19 @@ impl Credential {
     pub async fn update_credential(
         &mut self,
         config: &super::configs::Config,
-        aws_cred: aws_sdk_sts::model::Credentials,
+        aws_cred: aws_sdk_sts::types::Credentials,
     ) {
-        self.access_key_id = aws_cred.access_key_id;
-        self.secret_access_key = aws_cred.secret_access_key;
-        self.session_token = aws_cred.session_token.clone();
-        self.security_token = aws_cred.session_token;
+        self.access_key_id = Some(aws_cred.access_key_id);
+        self.secret_access_key = Some(aws_cred.secret_access_key);
+        self.session_token = Some(aws_cred.session_token);
 
-        if let Some(system_time) = aws_cred.expiration {
-            match SystemTime::try_from(system_time) {
-                Ok(dtime) => {
-                    // When writing the deadline, do it in local time
-                    let datetime: DateTime<Local> = dtime.into();
-                    self.expiration = Some(datetime.format("%Y-%m-%d %H:%M:%S").to_string());
-                }
-                Err(_) => return,
+        match SystemTime::try_from(aws_cred.expiration) {
+            Ok(dtime) => {
+                // When writing the deadline, do it in local time
+                let datetime: DateTime<Local> = dtime.into();
+                self.expiration = Some(datetime.format("%Y-%m-%d %H:%M:%S").to_string());
             }
+            Err(_) => return,
         }
 
         // アカウント情報を取得して設定しておく
@@ -366,7 +358,6 @@ impl AWSFile for Credential {
         self.__to_file_list_push(&mut list, "aws_access_key_id", &self.access_key_id);
         self.__to_file_list_push(&mut list, "aws_secret_access_key", &self.secret_access_key);
         self.__to_file_list_push(&mut list, "aws_session_token", &self.session_token);
-        self.__to_file_list_push(&mut list, "aws_security_token", &self.security_token);
         self.__to_file_list_push(&mut list, "expiration", &self.expiration);
         self.__to_file_list_push(&mut list, "mfa_serial", &self.mfa_serial);
         self.__to_file_list_push(&mut list, "role_arn", &self.role_arn);

@@ -178,7 +178,7 @@ pub async fn update(profile: Option<String>) -> Result<(), Box<dyn std::error::E
 
     // Credentialを取得
     let opt_cred = credentials.suffix_credential(name.clone());
-    let mut cred = opt_cred.unwrap();
+    let cred = opt_cred.unwrap();
 
     // reconfigureの処理を行う
     let mut aws_configure = configure::AWSConfigure::from_conf(config.clone(), Some(cred.clone()));
@@ -268,7 +268,8 @@ pub fn list() -> Result<(), Box<dyn std::error::Error>> {
     let credentials = read_credential(&mut prompter);
 
     // ベースとなるcredentialのみ取得
-    let bases = credentials.bases;
+    let mut bases = credentials.bases;
+    bases.sort_by(|a, b| a.name.cmp(&b.name));
 
     // 現在のプロファイルを取得
     let selected = read_tool(&mut prompter);

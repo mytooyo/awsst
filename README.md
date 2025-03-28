@@ -2,7 +2,7 @@
 # AWSプロファイル管理ツール
 
 `aws configure`で管理するプロファイルをより簡単に扱えるようにするツールです.  
-プロファイルの登録、更新、削除の他にSTSセッショントークンを取得できます.   
+プロファイルの登録、更新、削除の他にSTSセッショントークンを取得できます.
 セッショントークンを取得することで指定のプロファイルで認証状態を保持し、  
 `aws`コマンドを実行することができます.  
 また、MFAデバイスによる2ファクタ認証も可能であるため、MFA必須のIAMユーザでも`aws`コマンドを実行できます.  
@@ -12,9 +12,9 @@
 本ツールは環境変数の`AWS_PROFILE`に`export`する仕様となっているため、下記の手順に従い設定が必要になります.  
 `export`することで`aws`コマンド実行時に`-p`を指定する必要がなくなります.  
 
-
 ## 使い方
-```
+
+```text
 awsst 0.1.0
 
 USAGE:
@@ -37,6 +37,7 @@ SUBCOMMANDS:
 ```
 
 ## インストール
+
 本アプリケーションをビルドし、実行可能ファイルにするための手順について記述する.  
 (本リポジトリがダウンロード済とする)  
 
@@ -51,7 +52,7 @@ $ cp `pwd`/target/release/awsst $HOME/tools/
 
 `cd`コマンドと合わせて実行する必要があるため、`.zshrc`または`.bashrc`に下記の通り設定する.  
 
-```
+```zsh
 awsst() {
     eval `$HOME/tools/awsst $@`
 }
@@ -87,6 +88,7 @@ $ awsst configure
 ```
 
 2. セッショントークン取得
+
 ```shell
 $ awsst
 ? Please select the profile you want to use › profile
@@ -95,25 +97,28 @@ Success! Token expiration is : 2022-04-01 00:00:00
 
 `awsst session`でサブコマンドを指定しても同一の処理を行えます.  
 
-
 3. プロファイル情報更新
+
 ```shell
-$ awsst update
+awsst update
 ```
 
 表示内容は`configure`サブコマンドと同一となります.
 
 4. プロファイル削除
+
 ```shell
 $ awsst remove
 ? Please select the profile you want to use › profile
 ```
 
 5. 利用プロファイル選択
+
 ```shell
 $ awsst use
 ? Please select the profile you want to use › profile
 ```
 
 ## License
+
 MIT License

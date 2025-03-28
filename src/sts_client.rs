@@ -17,7 +17,7 @@ pub struct AssumeRoleReq {
 pub async fn aws_sts_request(
     config: &profile::configs::Config,
     credential: profile::credentials::Credential,
-) -> Result<aws_sdk_sts::model::Credentials, aws_sdk_sts::Error> {
+) -> Result<aws_sdk_sts::types::Credentials, aws_sdk_sts::Error> {
     // MFA情報取得
     let mfa = get_mfa_info(credential.mfa_serial.clone());
 
@@ -79,11 +79,10 @@ fn get_mfa_info(mfa_serial: Option<String>) -> MFAInfo {
 /// STSクライアント生成
 ///
 async fn __sts_client(config: &profile::configs::Config) -> aws_sdk_sts::Client {
-    // AWS用のConfig情報取得
-    let aws_config = aws_config::from_env()
-        .region(aws_sdk_sts::Region::new(config.region.clone()))
-        .load()
-        .await;
+    let config_builder = aws_config::defaults(aws_config::BehaviorVersion::latest())
+        .region(aws_config::Region::new(config.region.clone()));
+
+    let aws_config = config_builder.load().await;
 
     aws_sdk_sts::Client::new(&aws_config)
 }
@@ -93,7 +92,7 @@ async fn __sts_client(config: &profile::configs::Config) -> aws_sdk_sts::Client 
 pub async fn sts_session_token(
     config: &profile::configs::Config,
     mfa: MFAInfo,
-) -> Result<aws_sdk_sts::model::Credentials, aws_sdk_sts::Error> {
+) -> Result<aws_sdk_sts::types::Credentials, aws_sdk_sts::Error> {
     // クライアント
     let client = __sts_client(config).await;
 
@@ -116,7 +115,7 @@ pub async fn sts_assume_role(
     config: &profile::configs::Config,
     role: AssumeRoleReq,
     mfa: MFAInfo,
-) -> Result<aws_sdk_sts::model::Credentials, aws_sdk_sts::Error> {
+) -> Result<aws_sdk_sts::types::Credentials, aws_sdk_sts::Error> {
     // クライアント
     let client = __sts_client(config).await;
 

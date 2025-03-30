@@ -1,4 +1,4 @@
-use chrono::{DateTime, Local};
+use chrono::{DateTime, Local, NaiveDateTime, TimeZone};
 use std::{collections::HashMap, env, fmt::Display, time::SystemTime};
 
 use super::utils::{AWSFile, AWSFileManager};
@@ -272,8 +272,14 @@ impl Credential {
     pub fn is_expired(&self) -> bool {
         // 期限が設定されている場合
         if let Some(expiration) = &self.expiration {
-            let date = DateTime::parse_from_str(&expiration, "%Y-%m-%d %H:%M:%S").unwrap();
-            let date = date.with_timezone(&Local);
+            let naive_dt = NaiveDateTime::parse_from_str(expiration, "%Y-%m-%d %H:%M:%S")
+                .expect("failed to parse naive datetime");
+
+            // Local timezone を使って DateTime<Local> に変換
+            let date: DateTime<Local> = Local
+                .from_local_datetime(&naive_dt)
+                .earliest()
+                .expect("failed to convert to local datetime");
             let now = Local::now();
             // 比較して、期限が切れていない場合は`false`
             // if date.cmp(&now) == Ordering::Greater {
